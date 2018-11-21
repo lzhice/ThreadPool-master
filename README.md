@@ -24,8 +24,11 @@ ThreadPool模块是对C++写的线程池库，可以动态添加任务。
 
 ## How to use
 
+>yourtask.h:
+> 
+
 ```cpp
-yourtask.h:
+#include "Task.h"
 class YourTask : public TaskBase
 {
 public:
@@ -37,10 +40,13 @@ public:
 
 	...
 };
+```
 
-main.cpp:
+>main.cpp:
+> 
 
-#include "Task.h"
+```cpp
+#include "yourtask.h"
 #include "ThreadPool.h"
 
 ThreadPool::Instance().init(4);;	//初始化线程池，创建n个线程的线程池。
