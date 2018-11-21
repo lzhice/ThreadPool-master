@@ -1,4 +1,5 @@
-﻿@Brief:		ThreadPool
+ThreadPool moudle
+========================================
 @version:		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.0.1<br/>
 @Last modified: 	&nbsp;&nbsp;2018/10/16<br/>
 @Author:		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vilas Wang<br/>
