@@ -1,9 +1,9 @@
 ﻿@Brief:		ThreadPool
-@version:	1.0.1
-@Last modified: 2018/10/16
-@Author:	Vilas Wang
-@Contact:	QQ451930733
-@Email:		vilas900420@gmail.com / wwj19900420@163.com / 451930733@qq.com
+@version:		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.0.1<br/>
+@Last modified: 	&nbsp;&nbsp;2018/10/16<br/>
+@Author:		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vilas Wang<br/>
+@Contact:		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;QQ451930733<br/>
+@Email:			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vilas900420@gmail.com / 451930733@qq.com
 
 Copyright © 2018 Vilas Wang. All rights reserved.
 
@@ -11,7 +11,7 @@ Copyright © 2018 Vilas Wang. All rights reserved.
 
 
 
-##Detailed Description
+## Detailed Description
 
 
 ThreadPool模块是对C++写的线程池库，可以动态添加任务。
@@ -22,8 +22,9 @@ ThreadPool模块是对C++写的线程池库，可以动态添加任务。
 
 
 
-##How to use
+## How to use
 
+···cpp
 yourtask.h:
 class YourTask : public TaskBase
 {
@@ -50,8 +51,4 @@ for (int i = 0; i < 10; ++i)
 }
 
 ThreadPool::Instance().waitForDone();	//停止所有的任务，并且将所有线程退出。
-
-
-
-
-
+```
