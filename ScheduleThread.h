@@ -6,6 +6,7 @@
 #include <atomic>
 #include <mutex>
 
+//class ScheduleThread - 线程池调度线程
 class ScheduleThread
 {
 public:
@@ -29,7 +30,7 @@ protected:
 
 private:
 	static unsigned __stdcall ThreadFunc(LPVOID pParam);
-	void switchThread(UINT threadId);
+	void switchToIdleThread(UINT threadId);
 
 private:
 	HANDLE m_hThread;
