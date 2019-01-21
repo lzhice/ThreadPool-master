@@ -1,8 +1,11 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "ScheduleThread.h"
 #include <process.h>
 #include <iostream>
 #include "ThreadPool.h"
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+#include "ClassMemoryTracer.h"
+#endif
 
 
 ScheduleThread::ScheduleThread()
@@ -11,6 +14,9 @@ ScheduleThread::ScheduleThread()
 	, m_bExit(false)
 	, m_bRunning(false)
 {
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+	TRACE_CLASS_CONSTRUCTOR(ThreadPoolThread);
+#endif
 	m_hEvent = CreateEvent(0, TRUE, TRUE, 0);
 	if (nullptr == m_hEvent)
 	{
@@ -20,6 +26,9 @@ ScheduleThread::ScheduleThread()
 
 ScheduleThread::~ScheduleThread()
 {
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+	TRACE_CLASS_DESTRUCTOR(ThreadPoolThread);
+#endif
 	std::cout << __FUNCTION__ << " id:" << m_nThreadID << std::endl;
 
 	quit();

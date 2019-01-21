@@ -1,11 +1,13 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "ThreadPoolThread.h"
 #include "ThreadPool.h"
 #include "Task.h"
 #include <process.h>
 #include <cassert>
 #include <iostream>
-#define WAIT_TIME 20
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+#include "ClassMemoryTracer.h"
+#endif
 
 ThreadPoolThread::ThreadPoolThread(ThreadPool* threadPool)
 	: m_pThreadPool(threadPool)
@@ -15,6 +17,9 @@ ThreadPoolThread::ThreadPoolThread(ThreadPool* threadPool)
 	, m_nThreadID(0)
 	, m_bExit(false)
 {
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+	TRACE_CLASS_CONSTRUCTOR(ThreadPoolThread);
+#endif
 	m_hEvent = CreateEvent(nullptr, false, false, nullptr);
 	if (nullptr == m_hEvent)
 	{
@@ -24,6 +29,9 @@ ThreadPoolThread::ThreadPoolThread(ThreadPool* threadPool)
 
 ThreadPoolThread::~ThreadPoolThread()
 {
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+	TRACE_CLASS_DESTRUCTOR(ThreadPoolThread);
+#endif
 	std::cout << __FUNCTION__ << " id:" << m_nThreadID << std::endl;
 
 	quit();

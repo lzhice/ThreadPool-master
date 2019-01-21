@@ -1,18 +1,27 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "ThreadPool.h"
 #include <cassert>
 #include <iostream>
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+#include "ClassMemoryTracer.h"
+#endif
 
 ThreadPool::ThreadPool()
 	: m_nThreadNum(1)
 	, m_bInitialized(false)
 	, m_pCallBack(nullptr)
 {
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+	TRACE_CLASS_CONSTRUCTOR(ThreadPoolThread);
+#endif
 	m_pThread = new ScheduleThread;
 }
 
 ThreadPool::~ThreadPool()
 {
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+	TRACE_CLASS_DESTRUCTOR(ThreadPoolThread);
+#endif
 	std::cout << __FUNCTION__ << "(B)" << std::endl;
 	waitForDone();
 	if (m_pThread)
@@ -23,6 +32,9 @@ ThreadPool::~ThreadPool()
 		m_pThread = nullptr;
 	}
 	std::cout << __FUNCTION__ << "(E)" << std::endl;
+#ifdef TRACE_CLASS_MEMORY_ENABLED
+	TRACE_CLASS_PRINT();
+#endif
 }
 
 ThreadPool* ThreadPool::globalInstance()
