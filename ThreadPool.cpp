@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "ThreadPool.h"
 #include <cassert>
 #include <iostream>
@@ -79,6 +80,11 @@ bool ThreadPool::addTask(std::shared_ptr<TaskBase> t, Priority p)
 	else if (p == High)
 	{
 		m_taskQueue.pushFront(t);	//高优先级任务
+	}
+
+	if (m_pThread->isSuspend())
+	{
+		m_pThread->resume();
 	}
 
 	return true;
