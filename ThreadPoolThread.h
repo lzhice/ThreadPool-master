@@ -3,7 +3,7 @@
 #include <list>
 #include <stack>
 #include <atomic>
-#include "Mutex.h"
+#include "CSLock.h"
 
 class TaskBase;
 class ThreadPool;
@@ -46,7 +46,7 @@ private:
 	UINT m_nThreadID;
 	HANDLE m_hEvent;
 	std::atomic<bool> m_bExit;
-	TPLock m_mutex;
+	CSLock m_lock;
 
 	std::shared_ptr<TaskBase> m_pTask;
 	ThreadPool* m_pThreadPool;
@@ -70,7 +70,7 @@ public:
 
 private:
 	std::list<ThreadPoolThread*>m_list;
-	TPLock m_lock;
+	CSLock m_lock;
 };
 
 class IdleThreadStack
@@ -88,5 +88,5 @@ public:
 
 private:
 	std::stack<ThreadPoolThread*> m_stack;
-	TPLock m_lock;
+	CSLock m_lock;
 };
