@@ -61,12 +61,14 @@ public:
 public:
 	bool append(ThreadPoolThread* t);
 	bool remove(ThreadPoolThread* t);
+	ThreadPoolThread* get(int task_id);
 	ThreadPoolThread* take(int task_id);
 	ThreadPoolThread* take(UINT thread_id);
 	ThreadPoolThread* pop_back();
 	int size();
 	bool isEmpty();
 	bool clear();
+	void stopAll();
 
 private:
 	std::list<ThreadPoolThread*>m_list;

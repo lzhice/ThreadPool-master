@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "ScheduleThread.h"
 #include <process.h>
 #include <iostream>
@@ -129,13 +129,13 @@ unsigned __stdcall ScheduleThread::ThreadFunc(LPVOID pParam)
 		t->m_bRunning = true;
 		t->onBeforeExec();
 
-		DWORD ret = WAIT_FAILED;
-		BOOL hasMsg = FALSE;
 		MSG msg = { 0 };
+		PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
 
 		HANDLE h[1];
 		h[0] = t->m_hEvent;
 
+		DWORD ret = WAIT_FAILED;
 		while (!t->m_bExit)
 		{
 			ret = MsgWaitForMultipleObjects(1, h, false, INFINITE, QS_ALLPOSTMESSAGE);
@@ -149,8 +149,7 @@ unsigned __stdcall ScheduleThread::ThreadFunc(LPVOID pParam)
 			case WAIT_OBJECT_0 + 1:
 				{
 					msg = { 0 };
-					hasMsg = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
-					if (TRUE == hasMsg)
+					if (TRUE == PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 					{
 						switch (msg.message)
 						{

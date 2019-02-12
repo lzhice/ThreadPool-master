@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "Task.h"
 #include "CSLock.h"
 #include "ClassMemoryTracer.h"
