@@ -1,79 +1,81 @@
+ï»¿#ifndef THREADPOOL_H
+#define THREADPOOL_H
 #pragma once
 
+#include <functional>
 #include "ThreadPoolThread.h"
 #include "ScheduleThread.h"
 #include "Task.h"
 
-#define DEFAULT_THREAD_COUNT 4
 #define WM_THREAD_TASK_FINISHED (WM_USER + 1000)
 
-// class ThreadPool - Ïß³Ì³Ø
+// class ThreadPool - çº¿ç¨‹æ± 
 class ThreadPool
 {
 public:
-	enum Priority
-	{
-		Normal,
-		High
-	};
+    enum Priority
+    {
+        Normal,
+        High
+    };
 
-	~ThreadPool();
+    virtual ~ThreadPool();
 #if _MSC_VER >= 1700
-	ThreadPool(const ThreadPool &) = delete;
-	ThreadPool &operator=(const ThreadPool &) = delete;
+    ThreadPool(const ThreadPool &) = delete;
+    ThreadPool &operator=(const ThreadPool &) = delete;
 #endif
 
-	static ThreadPool* globalInstance();
+    static ThreadPool* globalInstance();
 
 public:
-	//³õÊ¼»¯Ïß³Ì³Ø£¬´´½¨n¸öÏß³ÌµÄÏß³Ì³Ø¡£
-	bool init(int threadCount = DEFAULT_THREAD_COUNT);
-	//Í£Ö¹ËùÓĞµÄÈÎÎñ£¬²¢ÇÒ½«ËùÓĞÏß³ÌÍË³ö¡£
-	bool waitForDone();
+    //åˆå§‹åŒ–çº¿ç¨‹æ± ï¼Œåˆ›å»ºnä¸ªçº¿ç¨‹çš„çº¿ç¨‹æ± ã€‚
+    bool init(int threadCount = 4);
+    //åœæ­¢æ‰€æœ‰çš„ä»»åŠ¡ï¼Œå¹¶ä¸”å°†æ‰€æœ‰çº¿ç¨‹é€€å‡ºã€‚
+    bool waitForDone();
 
-	//priorityÎªÓÅÏÈ¼¶¡£¸ßÓÅÏÈ¼¶µÄÈÎÎñ½«±»²åÈëµ½¶ÓÊ×
-	bool addTask(std::shared_ptr<TaskBase> t, Priority p = Normal);
-	bool abortTask(int taskId);
-	bool abortAllTask();
+    //priorityä¸ºä¼˜å…ˆçº§ã€‚é«˜ä¼˜å…ˆçº§çš„ä»»åŠ¡å°†è¢«æ’å…¥åˆ°é˜Ÿé¦–
+    bool addTask(std::unique_ptr<TaskBase> t, Priority p = Normal);
+    bool abortTask(int taskId);
+    bool abortAllTask();
 
-	bool hasTask() { return !m_taskQueue.isEmpty(); }
-	bool hasIdleThread() { return !m_idleThreads.isEmpty(); }
+    bool hasTask() { return !m_taskQueue.isEmpty(); }
+    bool hasIdleThread() { return !m_idleThreads.isEmpty(); }
 
 public:
-	class ThreadPoolCallBack
-	{
-	public:
-		virtual void onTaskFinished(int task_id) = 0;
-	};
+    void setNotifyCallBack(std::function<void(int)> callback);
 
-	void setCallBack(ThreadPoolCallBack* pCallBack);
-	void onTaskFinished(int taskId, UINT threadId);
+protected:
+    void onTaskFinished(int taskId, UINT threadId);
 
 private:
-	ThreadPool();
+    ThreadPool();
 #if _MSC_VER < 1700
-	ThreadPool(const ThreadPool &);
-	ThreadPool &operator=(const ThreadPool &);
+    ThreadPool(const ThreadPool &);
+    ThreadPool &operator=(const ThreadPool &);
 #endif
 
-	std::shared_ptr<TaskBase> takeTask();
-	ThreadPoolThread* popIdleThread();
-	ThreadPoolThread* takeActiveThread(UINT threadId);
-	void appendActiveThread(ThreadPoolThread*);
-	void pushIdleThread(ThreadPoolThread*);
+    std::unique_ptr<TaskBase> takeTask();
+    std::unique_ptr<ThreadPoolThread> popIdleThread();
+    std::unique_ptr<ThreadPoolThread> takeActiveThread(UINT threadId);
+    void appendActiveThread(std::unique_ptr<ThreadPoolThread>);
+    void pushIdleThread(std::unique_ptr<ThreadPoolThread>);
 
-	friend class ScheduleThread;
+    friend class ScheduleThread;
+    friend class ThreadPoolThread;
 
 private:
-	int m_nThreadNum;
+    int m_nThreadNum;
 #if _MSC_VER >= 1700
-	std::atomic<bool> m_bInitialized;
+    std::atomic<bool> m_bInitialized;
+    std::unique_ptr<ScheduleThread> m_pThread;
 #else
-	bool m_bInitialized;
+    bool m_bInitialized;
+    std::shared_ptr<ScheduleThread> m_pThread;
 #endif
-	ThreadPoolCallBack* m_pCallBack;
-	ScheduleThread *m_pThread;
-	IdleThreadStack m_idleThreads;
-	ActiveThreadList m_activeThreads;
-	TaskQueue m_taskQueue;
+    IdleThreadStack m_idleThreads;
+    ActiveThreadList m_activeThreads;
+    TaskQueue m_taskQueue;
+    std::function<void(int)> m_pCallBack;
 };
+
+#endif

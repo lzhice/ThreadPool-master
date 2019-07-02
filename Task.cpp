@@ -1,6 +1,7 @@
-//#include "stdafx.h"
-#include "Task.h"
+﻿#include "Task.h"
 #include "ClassMemoryTracer.h"
+
+using namespace VCUtil;
 
 #if _MSC_VER >= 1700
 std::atomic<int> TaskBase::s_id = 0;
@@ -9,25 +10,25 @@ int TaskBase::s_id = 0;
 #endif
 
 TaskBase::TaskBase(bool bAutoDelete)
-	: m_id(++s_id)
-	, m_bAutoDelete(bAutoDelete)
+    : m_id(++s_id)
+    , m_bAutoDelete(bAutoDelete)
 {
-	TRACE_CLASS_CONSTRUCTOR(TaskBase);
+    TRACE_CLASS_CONSTRUCTOR(TaskBase);
 }
 
 TaskBase::~TaskBase()
 {
-	TRACE_CLASS_DESTRUCTOR(TaskBase);
+    TRACE_CLASS_DESTRUCTOR(TaskBase);
 }
 
 const int TaskBase::id() const
 {
-	return m_id;
+    return m_id;
 }
 
 bool TaskBase::isAutoDelete() const
 {
-	return m_bAutoDelete;
+    return m_bAutoDelete;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -37,55 +38,56 @@ TaskQueue::TaskQueue(void)
 
 TaskQueue::~TaskQueue(void)
 {
-	clear();
+    clear();
 }
 
-std::shared_ptr<TaskBase> TaskQueue::pop()
+std::unique_ptr<TaskBase> TaskQueue::pop()
 {
-	std::shared_ptr<TaskBase> t = nullptr;
-	Locker<CSLock> locker(m_lock);
-
-	if (!m_TaskQueue.empty())
-	{
-		t = m_TaskQueue.front();
-		m_TaskQueue.pop_front();
-	}
-	return t;
+    std::unique_ptr<TaskBase> t = nullptr;
+    {
+        Locker<CSLock> locker(m_lock);
+        if (!m_queTasks.empty())
+        {
+            t = std::move(m_queTasks.front());
+            m_queTasks.pop_front();
+        }
+    }
+    return t;
 }
 
-bool TaskQueue::push(std::shared_ptr<TaskBase> t)
+bool TaskQueue::push(std::unique_ptr<TaskBase> t)
 {
-	if (!t.get())
-	{
-		return false;
-	}
+    if (!t.get())
+        return false;
 
-	Locker<CSLock> locker(m_lock);
-	m_TaskQueue.push_back(t);
-	return true;
+    Locker<CSLock> locker(m_lock);
+    m_queTasks.emplace_back(std::move(t));
+    return true;
 }
 
-bool TaskQueue::pushFront(std::shared_ptr<TaskBase> t)
+bool TaskQueue::pushFront(std::unique_ptr<TaskBase> t)
 {
-	if (!t.get())
-	{
-		return false;
-	}
+    if (!t.get())
+        return false;
 
-	Locker<CSLock> locker(m_lock);
-	m_TaskQueue.push_front(t);
-	return true;
+    {
+        Locker<CSLock> locker(m_lock);
+        m_queTasks.emplace_front(std::move(t));
+    }
+    return true;
 }
 
 bool TaskQueue::isEmpty()
 {
-	Locker<CSLock> locker(m_lock);
-	return m_TaskQueue.empty();
+    Locker<CSLock> locker(m_lock);
+    return m_queTasks.empty();
 }
 
 bool TaskQueue::clear()
 {
-	Locker<CSLock> locker(m_lock);
-	m_TaskQueue.clear();
-	return true;
+    {
+        Locker<CSLock> locker(m_lock);
+        m_queTasks.clear();
+    }
+    return true;
 }

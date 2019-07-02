@@ -1,14 +1,14 @@
-/*////////////////////////////////////////////////////////////////////
-@Brief:		×·×ÙC++ÀàµÄÄÚ´æ·ÖÅäºÍÊÍ·Å
+ï»¿/*
+@Brief:		è¿½è¸ªC++ç±»çš„å†…å­˜åˆ†é…å’Œé‡Šæ”¾
 @Author:	vilas wang
-@Contact:	QQ451930733|451930733@qq.com
+@Contact:	QQ451930733
 
-¡¾ÓÃ·¨¡¿
+ã€ç”¨æ³•ã€‘
 
-1£ºÔ¤¶¨ÒåºêTRACE_CLASS_MEMORY_ENABLED
+1ï¼šé¢„å®šä¹‰å®TRACE_CLASS_MEMORY_ENABLED
 
-2£ºÔÚĞèÒª×·×ÙµÄÀàµÄ¹¹Ôìº¯ÊıºÍÎö¹¹º¯Êı´ò±ê¼Ç
-Àı£º
+2ï¼šåœ¨éœ€è¦è¿½è¸ªçš„ç±»çš„æ„é€ å‡½æ•°å’Œææ„å‡½æ•°æ‰“æ ‡è®°
+ä¾‹ï¼š
 Class A
 {
 public:
@@ -16,101 +16,19 @@ A() { TRACE_CLASS_CONSTRUCTOR(A); }
 ~A() { TRACE_CLASS_DESTRUCTOR(A); }
 }
 
-3: ×îºóµÈĞèÒªÖªµÀÀàÄÚ´æ·ÖÅäºÍÊÍ·ÅÇé¿öµÄÊ±ºò(±ÈÈç³ÌĞòÍË³öÇ°)´òÓ¡ĞÅÏ¢
-TRACE_CLASS_PRINT();
-///////////////////////////////////////////////////////////////////////////////////////*/
+3: æœ€åç­‰éœ€è¦çŸ¥é“ç±»å†…å­˜åˆ†é…å’Œé‡Šæ”¾æƒ…å†µçš„æ—¶å€™(æ¯”å¦‚ç¨‹åºé€€å‡ºå‰)æ‰“å°ä¿¡æ¯
+TRACE_CLASS_CHECK_LEAKS();
+*/
 
 #pragma once
-#include <windows.h>
+#include <mutex>
 #include <string>
-#include <memory>
 #include <map>
-
-typedef std::map<std::string, int> TClassRefCount;
-
-class Lock;
-class ClassMemoryTracer
-{
-public:
-	template <class T>
-	static void addRef()
-	{
-		const char *name = typeid(T).name();
-		std::string str(name);
-		if (str.empty())
-		{
-			return;
-		}
-		m_lock->lock();
-		auto iter = s_mapRefConstructor.find(str);
-		if (iter == s_mapRefConstructor.end())
-		{
-			s_mapRefConstructor[str] = 1;
-		}
-		else
-		{
-			s_mapRefConstructor[str] = ++iter->second;
-		}
-		m_lock->unLock();
-	}
-
-	template <class T>
-	static void decRef()
-	{
-		const char *name = typeid(T).name();
-		std::string str(name);
-		if (str.empty())
-		{
-			return;
-		}
-		m_lock->lock();
-		auto iter = s_mapRefDestructor.find(str);
-		if (iter == s_mapRefDestructor.end())
-		{
-			s_mapRefDestructor[str] = 1;
-		}
-		else
-		{
-			s_mapRefDestructor[str] = ++iter->second;
-		}
-		m_lock->unLock();
-	}
-
-	static void printInfo();
-
-private:
-	ClassMemoryTracer() {}
-	ClassMemoryTracer(const ClassMemoryTracer &) {}
-	ClassMemoryTracer &operator=(const ClassMemoryTracer &) {}
-
-private:
-#if _MSC_VER >= 1700
-	static std::unique_ptr<Lock> m_lock;
-#else
-	static std::shared_ptr<Lock> m_lock;
-#endif
-	static TClassRefCount s_mapRefConstructor;
-	static TClassRefCount s_mapRefDestructor;
-};
-
-class Lock
-{
-public:
-	Lock(void);
-	~Lock(void);
-
-public:
-	bool lock();
-	bool unLock();
-
-private:
-	CRITICAL_SECTION m_cs;
-};
 
 
 #ifndef TRACE_CLASS_CONSTRUCTOR
 #ifdef TRACE_CLASS_MEMORY_ENABLED
-#define TRACE_CLASS_CONSTRUCTOR(T) ClassMemoryTracer::addRef<T>()
+#define TRACE_CLASS_CONSTRUCTOR(T) VCUtil::ClassMemoryTracer::addRef<T>()
 #else
 #define TRACE_CLASS_CONSTRUCTOR(T) __noop
 #endif
@@ -118,16 +36,72 @@ private:
 
 #ifndef TRACE_CLASS_DESTRUCTOR
 #ifdef TRACE_CLASS_MEMORY_ENABLED
-#define TRACE_CLASS_DESTRUCTOR(T) ClassMemoryTracer::decRef<T>()
+#define TRACE_CLASS_DESTRUCTOR(T) VCUtil::ClassMemoryTracer::release<T>()
 #else
 #define TRACE_CLASS_DESTRUCTOR(T) __noop
 #endif
 #endif
 
-#ifndef TRACE_CLASS_PRINT
+#ifndef TRACE_CLASS_CHECK_LEAKS
 #ifdef TRACE_CLASS_MEMORY_ENABLED
-#define TRACE_CLASS_PRINT() ClassMemoryTracer::printInfo()
+#define TRACE_CLASS_CHECK_LEAKS() VCUtil::ClassMemoryTracer::checkMemoryLeaks()
 #else
-#define TRACE_CLASS_PRINT __noop
+#define TRACE_CLASS_CHECK_LEAKS() __noop
 #endif
 #endif
+
+namespace VCUtil {
+
+    class ClassMemoryTracer
+    {
+    private:
+        typedef std::map<size_t, std::pair<std::string, int>> TClassRefCount;
+        static TClassRefCount s_mapRefCount;
+        static std::mutex m_lock;
+
+    public:
+        template <typename T>
+        static void addRef()
+        {
+            static_assert(std::is_class<T>::value, "T must be class type.");
+            const size_t hashcode = typeid(T).hash_code();
+
+            std::lock_guard<std::mutex> locker(m_lock);
+            auto iter = s_mapRefCount.find(hashcode);
+            if (iter == s_mapRefCount.end())
+            {
+                const char *name = typeid(T).name();
+                s_mapRefCount[hashcode] = std::make_pair<std::string, int>(std::string(name), 1);
+            }
+            else
+            {
+                ++iter->second.second;
+            }
+        }
+
+        template <typename T>
+        static void release()
+        {
+            static_assert(std::is_class<T>::value, "T must be class type.");
+            const size_t hashcode = typeid(T).hash_code();
+
+            std::lock_guard<std::mutex> locker(m_lock);
+            auto iter = s_mapRefCount.find(hashcode);
+            if (iter != s_mapRefCount.end())
+            {
+                if (iter->second.second > 0)
+                {
+                    --iter->second.second;
+                }
+            }
+        }
+
+        static void checkMemoryLeaks();
+
+    private:
+        ClassMemoryTracer() {}
+        ~ClassMemoryTracer() {}
+        ClassMemoryTracer(const ClassMemoryTracer &);
+        ClassMemoryTracer &operator=(const ClassMemoryTracer &);
+    };
+}

@@ -1,74 +1,91 @@
+Ôªø/*
+@Brief:		windowsÈîÅ
+@Author:	vilas wang
+@Contact:	QQ451930733
+*/
+
+#ifndef __WINDOWS_LOCK_H__
+#define __WINDOWS_LOCK_H__
+
 #pragma once
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <memory>
 
-//Class CSLock - πÿº¸∂ŒÀ¯
-class CSLock
-{
-public:
-	explicit CSLock();
-	~CSLock();
+namespace VCUtil {
 
-	void lock();
-	bool tryLock();
-	void unlock();
+    //Class CSLock - ÂÖ≥ÈîÆÊÆµÈîÅ
+    class CSLock
+    {
+    public:
+        CSLock();
+        ~CSLock();
 
-private:
-	CRITICAL_SECTION m_cs;
-};
+        virtual void lock();
+        virtual bool tryLock();
+        virtual void unlock();
 
-//Class SRWLock - slim ∂¡–¥À¯
-class SRWLock
-{
-public:
-	explicit SRWLock();
-	~SRWLock();
+    private:
+        CSLock(const CSLock &);
+        CSLock &operator=(const CSLock &);
 
-	void lock(bool bShared = false);
-	void unlock();
+    private:
+        CRITICAL_SECTION m_cs;
+    };
 
-private:
-	SRWLOCK m_lock;
-	long m_bSharedLocked;
-	long m_bExclusiveLocked;
-};
+    //Class SRWLock - slim ËØªÂÜôÈîÅ
+    class SRWLock
+    {
+    public:
+        SRWLock();
+        ~SRWLock();
 
-template<class _Lock>
-class Locker
-{
-public:
-	explicit Locker(_Lock& lock)
-		: m_lock(lock)
-	{
-		m_lock.lock();
-	}
+        virtual void lock(bool bShared = false);
+        virtual bool tryLock(bool bShared = false);
+        virtual void unlock();
 
-	Locker(_Lock& lock, bool bShared)
-		: m_lock(lock)
-	{
-		m_lock.lock(bShared);
-	}
+    private:
+        SRWLock(const SRWLock &);
+        SRWLock &operator=(const SRWLock &);
+
+    private:
+        SRWLOCK m_lock;
+        long m_bSharedLocked;
+        long m_bExclusiveLocked;
+    };
+
+    template<class _Lock>
+    class Locker
+    {
+    public:
+        explicit Locker(_Lock& lock)
+            : m_lock(lock)
+        {
+            m_lock.lock();
+        }
+
+        Locker(_Lock& lock, bool bShared)
+            : m_lock(lock)
+        {
+            m_lock.lock(bShared);
+        }
 
 #if _MSC_VER >= 1700
-	~Locker() _NOEXCEPT
+        ~Locker() _NOEXCEPT
 #else
-	~Locker()
+        ~Locker()
 #endif
-	{
-		m_lock.unlock();
-	}
+        {
+            m_lock.unlock();
+        }
 
-#if _MSC_VER >= 1700
-	Locker(const Locker&) = delete;
-	Locker& operator=(const Locker&) = delete;
+    private:
+        Locker(const Locker&);
+        Locker& operator=(const Locker&);
+
+    private:
+        _Lock& m_lock;
+    };
+}
+
 #endif
-
-private:
-#if _MSC_VER < 1700
-	Locker(const Locker&);
-	Locker& operator=(const Locker&);
-#endif
-
-private:
-	_Lock& m_lock;
-};

@@ -1,3 +1,5 @@
+ï»¿#ifndef TASKBASE_H
+#define TASKBASE_H
 #pragma once
 
 #include <deque>
@@ -17,18 +19,18 @@ public:
     virtual void cancel() = 0;
 
     const int id() const;
-	bool isAutoDelete() const;
+    bool isAutoDelete() const;
 
 protected:
-	int m_id;
+    int m_id;
 
 private:
 #if _MSC_VER >= 1700
     static std::atomic<int> s_id;
 #else
-	static int s_id;
+    static int s_id;
 #endif
-	bool m_bAutoDelete;
+    bool m_bAutoDelete;
 };
 
 class TaskQueue
@@ -38,13 +40,14 @@ public:
     ~TaskQueue();
 
 public:
-	std::shared_ptr<TaskBase> pop();
-    bool push(std::shared_ptr<TaskBase> t);
-    bool pushFront(std::shared_ptr<TaskBase> t);//²åµ½¶ÓÊ×
+    std::unique_ptr<TaskBase> pop();
+    bool push(std::unique_ptr<TaskBase> t);
+    bool pushFront(std::unique_ptr<TaskBase> t);//æ’åˆ°é˜Ÿé¦–
     bool isEmpty();
     bool clear();
 
 private:
-    std::deque<std::shared_ptr<TaskBase>>m_TaskQueue;
-    mutable CSLock m_lock;
+    std::deque<std::unique_ptr<TaskBase>> m_queTasks;
+    mutable VCUtil::CSLock m_lock;
 };
+#endif

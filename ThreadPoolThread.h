@@ -1,4 +1,8 @@
+ï»¿#ifndef THREADPOOLTHREAD_H
+#define THREADPOOLTHREAD_H
 #pragma once
+
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <list>
 #include <stack>
@@ -7,107 +11,110 @@
 #endif
 #include "Lock.h"
 
+
 class TaskBase;
 class ThreadPool;
 
-//Class ThreadPoolThread - Ïß³Ì³Ø¹¤×÷Ïß³Ì
+//Class ThreadPoolThread - çº¿ç¨‹æ± å·¥ä½œçº¿ç¨‹
 class ThreadPoolThread
 {
 public:
-	explicit ThreadPoolThread(ThreadPool* threadPool);
+    explicit ThreadPoolThread(ThreadPool* threadpool);
 #if _MSC_VER >= 1700
-	ThreadPoolThread(const ThreadPoolThread &) = delete;
-	ThreadPoolThread &operator=(const ThreadPoolThread &) = delete;
+    ThreadPoolThread(const ThreadPoolThread &) = delete;
+    ThreadPoolThread &operator=(const ThreadPoolThread &) = delete;
 #endif
-	~ThreadPoolThread();
+    virtual ~ThreadPoolThread();
 
 public:
-	bool start();
-	void quit();
-	//Ïß³Ì¹ÒÆğ
-	bool suspend();
-	//Ïß³Ì¹ÒÆğ»Ö¸´
-	bool resume();
+    bool start();
+    void quit();
+    //çº¿ç¨‹æŒ‚èµ·
+    bool suspend();
+    //çº¿ç¨‹æŒ‚èµ·æ¢å¤
+    bool resume();
 
-	bool isRunning() const;
+    bool isRunning() const;
 
-	const UINT threadId() const { return m_nThreadID; }
-	const int taskId();
+    const UINT threadId() const { return m_nThreadID; }
+    const int taskId();
 
-	//½«ÈÎÎñ¹ØÁªµ½Ïß³ÌÀà
-	bool assignTask(std::shared_ptr<TaskBase> pTask);
-	bool startTask();
-	bool stopTask();
+    //å°†ä»»åŠ¡å…³è”åˆ°çº¿ç¨‹ç±»
+    bool assignTask(std::unique_ptr<TaskBase> pTask);
+    bool runTask();
+    bool terminateTask();
 
 protected:
-	virtual void exec();
-	//³¢ÊÔÍ£Ö¹ÕıÔÚÖ´ĞĞµÄÈÎÎñ£¬·ñÔòµÈ´ıÈÎÎñ½áÊø
-	virtual void waitForDone();
+    virtual void exec();
+    //å°è¯•åœæ­¢æ­£åœ¨æ‰§è¡Œçš„ä»»åŠ¡ï¼Œå¦åˆ™ç­‰å¾…ä»»åŠ¡ç»“æŸ
+    virtual void waitForDone();
 
 private:
 #if _MSC_VER < 1700
-	ThreadPoolThread(const ThreadPoolThread &);
-	ThreadPoolThread &operator=(const ThreadPoolThread &);
+    ThreadPoolThread(const ThreadPoolThread &);
+    ThreadPoolThread &operator=(const ThreadPoolThread &);
 #endif
-	static UINT WINAPI threadFunc(LPVOID pParam);
+    static UINT WINAPI threadFunc(LPVOID pParam);
 
-	bool isExit() const;
-	void setExit(bool bExit);
+    bool isExit() const;
+    void setExit(bool bExit);
 
 private:
-	HANDLE m_hThread;
-	UINT m_nThreadID;
-	HANDLE m_hEvent;
+    HANDLE m_hThread;
+    UINT m_nThreadID;
+    HANDLE m_hEvent;
 #if _MSC_VER >= 1700
-	std::atomic<bool> m_bExit;
-	std::atomic<bool> m_bRunning;
+    std::atomic<bool> m_bExit;
+    std::atomic<bool> m_bRunning;
 #else
-	mutable CSLock m_lock;
-	bool m_bExit;
-	bool m_bRunning;
+    mutable CSLock m_lock;
+    bool m_bExit;
+    bool m_bRunning;
 #endif
 
-	std::shared_ptr<TaskBase> m_pTask;
-	ThreadPool* m_pThreadPool;
+    std::unique_ptr<TaskBase> m_pTask;
+    ThreadPool* m_pThreadPool;
 };
 
 class ActiveThreadList
 {
 public:
-	ActiveThreadList();
-	~ActiveThreadList();
+    ActiveThreadList();
+    virtual ~ActiveThreadList();
 
 public:
-	bool append(ThreadPoolThread* t);
-	bool remove(ThreadPoolThread* t);
-	ThreadPoolThread* get(int task_id);
-	ThreadPoolThread* take(int task_id);
-	ThreadPoolThread* take(UINT thread_id);
-	ThreadPoolThread* pop_back();
-	int size();
-	bool isEmpty();
-	bool clear();
-	void stopAll();
+    bool append(std::unique_ptr<ThreadPoolThread> t);
+    bool remove(std::unique_ptr<ThreadPoolThread> t);
+    ThreadPoolThread* get(int task_id);
+    std::unique_ptr<ThreadPoolThread> take(int task_id);
+    std::unique_ptr<ThreadPoolThread> take(UINT thread_id);
+    std::unique_ptr<ThreadPoolThread> pop_back();
+    int size();
+    bool isEmpty();
+    bool clear();
+    void stopAll();
 
 private:
-	std::list<ThreadPoolThread*>m_list;
-	mutable CSLock m_lock;
+    std::list<std::unique_ptr<ThreadPoolThread>> m_threads;
+    mutable VCUtil::CSLock m_lock;
 };
 
 class IdleThreadStack
 {
 public:
-	IdleThreadStack();
-	~IdleThreadStack();
+    IdleThreadStack();
+    ~IdleThreadStack();
 
 public:
-	ThreadPoolThread* pop();
-	bool push(ThreadPoolThread*);
-	int size();
-	bool isEmpty();
-	bool clear();
+    std::unique_ptr<ThreadPoolThread> pop();
+    bool push(std::unique_ptr<ThreadPoolThread>);
+    int size();
+    bool isEmpty();
+    bool clear();
 
 private:
-	std::stack<ThreadPoolThread*> m_stack;
-	mutable CSLock m_lock;
+    std::stack<std::unique_ptr<ThreadPoolThread>> m_threads;
+    mutable VCUtil::CSLock m_lock;
 };
+
+#endif
