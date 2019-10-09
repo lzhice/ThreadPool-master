@@ -1,20 +1,25 @@
 ﻿ThreadPool
 ====================================================================
-@version: 2.0.1  
+@version: 1.0.1  
 @Author: Vilas Wang  
 @Contact: QQ451930733  
 @Email: vilas900420@gmail.com / 451930733@qq.com
 
-Copyright © 2018 Vilas Wang. All rights reserved.
+Copyright © 2018-2019 Vilas Wang. All rights reserved.
 
 
 
 ## Detailed Description
 
 
-ThreadPool模块是windows下用C++写的线程池库，可以动态添加任务。
-- 多任务并发执行
-- 所有任务异步调用
+ThreadPool模块，Windows平台下C++实现的线程池库。
+
+ThreadPool线程池功能特性如下：
+- 动态修改最大线程数
+- 动态添加任务到线程池执行
+- 多个任务并发执行
+- 动态结束某个任务或者所有任务
+- 任务执行的结果异步返回
 - 所有方法线程安全
 
 
